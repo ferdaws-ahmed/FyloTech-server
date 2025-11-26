@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
+const { ObjectId } = require("mongodb");
 
 // Express Setup
 const app = express();
@@ -41,17 +42,44 @@ async function run() {
       res.send("FyloTech Server Running ✔ DB Connected");
     });
 
-    // ===== Example Route: Get All Products =====
-    app.get("/products", async (req, res) => {
+    // =====  Get All Products =====
+     app.get("/products", async (req, res) => {
       try {
         const result = await productsCollection.find().toArray();
-        res.send(result);
+        res.status(200).send(result);
       } catch (error) {
         res.status(500).send({ message: "Error fetching products", error });
       }
     });
 
 
+// 3. Get Single Product By ID 
+        app.get("/products/:id", async (req, res) => {
+            const id = req.params.id;
+
+           
+            if (!ObjectId.isValid(id)) {
+              
+                console.warn(`Invalid ID format received: ${id}`);
+                return res.status(400).send({ message: "Invalid product ID format" });
+            }
+
+            try {
+                const product = await productsCollection.findOne({
+                    _id: new ObjectId(id)
+                });
+
+                if (!product) {
+                    
+                    return res.status(404).send({ message: "Product not found" });
+                }
+
+                res.status(200).send(product);
+            } catch (err) {
+                console.error("Error fetching single product:", err);
+                res.status(500).send({ message: "Error fetching product", error: err.message });
+            }
+        });
 
     // ===== Add User =====
 
